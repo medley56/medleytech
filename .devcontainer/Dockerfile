@@ -1,7 +1,7 @@
 FROM node:20
 
-# Install basic development tools and iptables/ipset
-RUN apt update && apt install -y less \
+# Install basic development tools
+RUN apt-get update && apt-get install -y less \
   git \
   procps \
   sudo \
@@ -10,14 +10,23 @@ RUN apt update && apt install -y less \
   unzip \
   gnupg2 \
   gh \
-  iptables \
-  ipset \
-  iproute2 \
-  dnsutils \
-  aggregate \
   jq \
   wget \
   vim
+
+# Install Go
+ENV GO_VERSION=1.24.5
+ENV ARCH=arm64
+RUN wget -q "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" && \
+  tar -C /usr/local -xzf "go${GO_VERSION}.linux-${ARCH}.tar.gz" && \
+  rm "go${GO_VERSION}.linux-${ARCH}.tar.gz"
+ENV PATH="${PATH}:/usr/local/go/bin"
+
+# Install latest Hugo
+RUN HUGO_VERSION=0.148.1 && \
+  wget "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_withdeploy_${HUGO_VERSION}_linux-${ARCH}.deb" && \
+  sudo dpkg -i "hugo_extended_withdeploy_${HUGO_VERSION}_linux-${ARCH}.deb" && \
+  rm "hugo_extended_withdeploy_${HUGO_VERSION}_linux-${ARCH}.deb"
 
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
@@ -50,10 +59,6 @@ ENV SHELL=/bin/zsh
 # Default powerline10k theme
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.0/zsh-in-docker.sh)" -- \
   -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
 
 # Install Claude
